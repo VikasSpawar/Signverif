@@ -2,8 +2,21 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
-const { protect } = require('../middleware/authMiddleware'); // We need to create this!
+const fs = require('fs');
+const { protect } = require('../middleware/authMiddleware');
 const { uploadDocument, getDocuments, getDocumentById, finalizeDocument, deleteDocument, resetDocument, shareDocument, getSharedDocument, signSharedDocument, getAuditLogs, unlockSharedDocument, rejectSharedDocument, requestOTP } = require('../controllers/documentController');
+
+// Ensure uploads directory exists
+const uploadsDir = path.join(__dirname, '../uploads');
+if (!fs.existsSync(uploadsDir)) {
+  try {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+    console.log('✅ Uploads directory created:', uploadsDir);
+  } catch (err) {
+    console.warn('⚠️ Could not create uploads directory:', err.message);
+    console.warn('💡 Consider using cloud storage (S3) for production');
+  }
+}
 
 // Configure Multer Storage
 const storage = multer.diskStorage({

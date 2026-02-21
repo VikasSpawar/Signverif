@@ -41,8 +41,15 @@ const maskEmail = (email) => {
 const uploadDocument = async (req, res) => {
   try {
     if (!req.file) {
+      console.warn('⚠️ No file in request');
       return res.status(400).json({ message: 'No file uploaded' });
     }
+
+    console.log('📁 Uploading file:', {
+      originalname: req.file.originalname,
+      size: req.file.size,
+      path: req.file.path
+    });
 
     const doc = await Document.create({
       user: req.user._id, // Got from auth middleware
@@ -52,12 +59,22 @@ const uploadDocument = async (req, res) => {
       status: 'Draft',
     });
 
+    console.log('✅ Document created:', doc._id);
+
     // AUDIT LOG: Document Created
     await logAudit(req, doc._id, 'Created', req.user.email, 'Document uploaded');
 
     res.status(201).json(doc);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('❌ Upload error:', {
+      message: error.message,
+      stack: error.stack,
+      userId: req.user?._id
+    });
+    res.status(500).json({ 
+      message: error.message || 'Failed to upload document',
+      type: error.name
+    });
   }
 };
 
