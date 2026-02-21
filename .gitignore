@@ -1,0 +1,135 @@
+# Root level .gitignore for Doc-Signature-App monorepo
+
+# IDE & Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.iml
+.sublime-project
+.sublime-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+.AppleDouble
+.LSOverride
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Dependencies are handled per package
+# But typically would ignore node_modules at root if exists
+root_node_modules/
+
+# Environment files
+.env.local
+.env.*.local
+
+# Build outputs
+dist/
+build/
+out/
+
+# Cache
+.cache/
+.next/
+.nuxt/
+.turbo/
+
+# Testing
+coverage/
+.nyc_output/
+
+# Temporary
+temp/
+tmp/
+.tmp/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Backup files
+*.backup
+*.bak
+*.swp
+*.swo
+
+# IDE specific
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+jsconfig.*.json
+
+# CI/CD
+.github/workflows/build-output/
+
+# Package manager lockfiles (optional - depends on your team preference)
+# Uncomment if you want to commit lockfiles
+# !package-lock.json
+# !yarn.lock
+# !pnpm-lock.yaml
+
+# Node
+.nvm
+.node-version
+.nvmrc
+
+# Yarn specific
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+
+# PM2
+pm2.log
+ecosystem.config.js.bak
+
+# Docker
+.docker/
+docker-compose.override.yml
+
+# SSH Keys and secrets
+*.pem
+*.key
+*.pub
+*.pfx
+secrets/
+
+# Uploads folder
+uploads/
+public/uploads/
+
+# Document files that shouldn't be tracked
+*.pdf
+
+
+
+# Ignore client and server specific files
+# Client
+client/.gitignore
+clent/node_modules/
+client/dist/
+
+# Server
+server/.gitignore
+server/node_modules/
+server/dist/
