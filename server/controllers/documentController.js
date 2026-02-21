@@ -4,7 +4,7 @@ const fs = require('fs');
 const signPDF = require('../utils/pdfSigner');
 const Signature = require('../models/Signature');
 const crypto = require('crypto');
-const nodemailer = require('nodemailer');
+const { sendShareInvitation, sendAccessCode } = require('../utils/emailService');
 const AuditLog = require('../models/AuditLog');
 
 // ---------------------------------------------------------
@@ -206,29 +206,30 @@ const shareDocument = async (req, res) => {
     const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
     const signLink = `${clientUrl}/sign/${shareToken}`;
 
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
-    });
-
     try {
-      await transporter.sendMail({
-        from: `"Signverif" <${process.env.EMAIL_USER}>`,
-        to: email,
-        subject: `Action Required: Please sign ${doc.title}`,
-        html: `
-          <h3>Signature Request</h3>
-          <p>${req.user.name} has sent you a secure document to sign: <strong>${doc.title}</strong></p>
-          <a href="${signLink}" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; margin-top: 10px;">Review & Sign Document</a>
-        `
-      });
+      // Send invitation email
+      await sendShareInvitation(email, req.user.name || req.user.email, doc.title, signLink);
+      console.log(`✅ Share invitation sent to ${email}`);
     } catch (emailErr) {
-      console.error("Email failed:", emailErr);
+      console.error("❌ Email send failed:", emailErr.message);
+      // Don't fail the request, but notify client
+      return res.status(500).json({ 
+        message: 'Document shared but email failed to send. ' + emailErr.message,
+        shareToken,
+        signLink,
+        emailError: true
+      });
     }
 
     await logAudit(req, doc._id, 'Shared', req.user.email, `Shared with ${email}`);
-    res.json({ message: 'Document shared successfully', shareToken, signLink });
+    res.json({ 
+      message: 'Document shared and email sent successfully', 
+      shareToken, 
+      signLink,
+      emailError: false
+    });
   } catch (error) {
+    console.error('Share document error:', error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -400,33 +401,21 @@ const requestOTP = async (req, res) => {
     doc.accessCode = accessCode;
     await doc.save();
 
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
-    });
-
     try {
-      await transporter.sendMail({
-        from: `"Signverif - Security" <${process.env.EMAIL_USER}>`,
-        to: doc.recipientEmail,
-        subject: `Your Access Code for ${doc.title}`,
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
-            <h3 style="color: #1f2937; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px;">Document Access Code</h3>
-            <p>Please use the following 6-digit Access Code to unlock <strong>${doc.title}</strong>:</p>
-            <div style="background-color: #f3f4f6; padding: 15px; border-radius: 6px; text-align: center; margin: 20px 0;">
-              <h2 style="letter-spacing: 8px; color: #2563eb; margin: 0; font-size: 32px;">${accessCode}</h2>
-            </div>
-          </div>
-        `
+      // Send OTP email
+      await sendAccessCode(doc.recipientEmail, doc.title, accessCode);
+      console.log(`✅ Access code sent to ${doc.recipientEmail}`);
+    } catch (emailErr) {
+      console.error("❌ OTP email send failed:", emailErr.message);
+      return res.status(500).json({ 
+        message: 'Failed to send access code: ' + emailErr.message,
+        emailError: true
       });
-      console.log(`🔑 OTP generated and sent to ${doc.recipientEmail}: ${accessCode}`);
-    } catch (err) {
-      console.error("Failed to send OTP email", err);
     }
 
-    res.json({ message: 'OTP sent successfully' });
+    res.json({ message: 'Access code sent successfully' });
   } catch (error) {
+    console.error('Request OTP error:', error);
     res.status(500).json({ message: error.message });
   }
 };

@@ -20,6 +20,7 @@ const ShareModal = ({
   const [email, setEmail] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState("");
+  const [emailError, setEmailError] = useState(false);
 
   if (!isOpen || !documentId) return null;
 
@@ -32,18 +33,35 @@ const ShareModal = ({
 
     setIsSending(true);
     setError("");
+    setEmailError(false);
 
     try {
       // We only send the email now, backend handles the rest!
-      await shareDocument(documentId, email);
-      alert(
-        `Success! Sharing link! An access code will be sent to ${email} separately for security.`,
-      );
+      const response = await shareDocument(documentId, email);
+      
+      if (response.emailError) {
+        // Email failed but document was shared
+        setEmailError(true);
+        alert(
+          `⚠️ Document was shared, but email delivery failed.\n\nReason: ${response.message}\n\nShare this link manually:\n${response.signLink}`,
+        );
+      } else {
+        alert(
+          `✅ Success! Signature request sent to ${email}`,
+        );
+      }
+      
       setEmail("");
       onSuccess();
       onClose();
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to send share request.");
+      const errorMsg = err.response?.data?.message || "Failed to send share request.";
+      setError(errorMsg);
+      
+      // Also check if it's an email-specific error
+      if (errorMsg.includes('email') || errorMsg.includes('Email') || errorMsg.includes('mail')) {
+        setEmailError(true);
+      }
     } finally {
       setIsSending(false);
     }
@@ -108,8 +126,22 @@ const ShareModal = ({
             </div>
 
             {error && (
-              <div className="bg-ink text-signal p-3 mt-6 border-brutal border-signal font-mono text-xs font-bold uppercase shadow-brutal-active">
-                ERROR: {error}
+              <div className={`${emailError ? 'bg-signal' : 'bg-ink'} ${emailError ? 'text-white' : 'text-signal'} p-3 mt-6 border-brutal ${emailError ? 'border-signal' : 'border-signal'} font-mono text-xs font-bold uppercase shadow-brutal-active`}>
+                <div className="font-black mb-2">
+                  {emailError ? '⚠️ EMAIL ERROR' : '❌ ERROR'}
+                </div>
+                {error}
+                {emailError && (
+                  <div className="mt-2 text-xs font-normal opacity-90">
+                    <p>Possible causes:</p>
+                    <ul className="list-disc list-inside mt-1">
+                      <li>Email service not configured on server</li>
+                      <li>Gmail credentials incorrect</li>
+                      <li>Gmail App Password not used</li>
+                    </ul>
+                    <p className="mt-2">Check server logs or contact admin.</p>
+                  </div>
+                )}
               </div>
             )}
           </div>
