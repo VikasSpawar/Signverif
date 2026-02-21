@@ -290,7 +290,7 @@ const PublicSign = () => {
 
               <button
                 type="submit"
-                className="w-full mt-6 bg-signal text-white font-mono font-bold text-sm py-4 border-brutal border-ink uppercase tracking-widest shadow-brutal hover:-translate-y-[2px] hover:-translate-x-[2px] hover:shadow-brutal-hover active:translate-y-0 active:translate-x-0 active:shadow-none transition-all flex items-center justify-center gap-2"
+                className="w-full mt-6 bg-signal text-white font-mono font-bold text-sm py-4 border-brutal border-ink uppercase tracking-widest shadow-brutal hover:-translate-y-0.5 hover:-translate-x-0.5 hover:shadow-brutal-hover active:translate-y-0 active:translate-x-0 active:shadow-none transition-all flex items-center justify-center gap-2"
               >
                 <Unlock size={18} /> Unlock Document
               </button>
