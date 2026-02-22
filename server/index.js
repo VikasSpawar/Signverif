@@ -2,7 +2,7 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const connectDB = require('./config/db');
-const { initEmailTransporter } = require('./utils/emailService');
+// const { initEmailTransporter } = require('./utils/emailService');
 const authRoutes = require('./routes/authRoutes');
 const documentRoutes = require('./routes/documentRoutes');
 const signatureRoutes = require('./routes/signRoutes');
@@ -14,7 +14,7 @@ dotenv.config();
 connectDB();
 
 // Initialize Email Service
-const emailReady = initEmailTransporter();
+// const emailReady = initEmailTransporter();
 
 const app = express();
 
@@ -101,5 +101,5 @@ app.listen(PORT, () => {
     console.log(`✅ Server running on port ${PORT}`);
     console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
     console.log(`🔒 Client URL: ${process.env.CLIENT_URL || 'Not set'}`);
-    console.log(`📧 Email Service: ${emailReady ? '✅ Ready' : '⚠️ Disabled'}`);
+    // console.log(`📧 Email Service: ${emailReady ? '✅ Ready' : '⚠️ Disabled'}`);
 });

@@ -1,3 +1,4 @@
+
 const nodemailer = require('nodemailer');
 
 let transporter = null;
@@ -15,42 +16,34 @@ const escapeHtml = (str = '') =>
     .replace(/'/g, '&#039;');
 
 /**
- * Create transporter based on ENV
- * Supports:
- * - Gmail (EMAIL_SERVICE=gmail)
- * - Custom SMTP (EMAIL_HOST, EMAIL_PORT, EMAIL_SECURE)
+ * Create transporter using Google OAuth2
+ * This bypasses Google's datacenter IP blocking on platforms like Render.
  */
 const createTransporter = () => {
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    console.warn('⚠️ Email disabled: missing credentials');
+  // Check for the required OAuth2 variables
+  if (
+    !process.env.EMAIL_USER || 
+    !process.env.OAUTH_CLIENT_ID || 
+    !process.env.OAUTH_REFRESH_TOKEN
+  ) {
+    console.warn('⚠️ Email disabled: missing OAuth credentials in environment');
     return null;
   }
 
-  // Prefer explicit SMTP if provided
-  if (process.env.EMAIL_HOST) {
-    return nodemailer.createTransport({
-      host: process.env.EMAIL_HOST,
-      port: Number(process.env.EMAIL_PORT || 587),
-      secure: process.env.EMAIL_SECURE === 'true',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      }
-    });
-  }
-
-  // Fallback Gmail (OK for MVP)
   return nodemailer.createTransport({
-    service: process.env.EMAIL_SERVICE || 'gmail',
+    service: 'gmail',
     auth: {
+      type: 'OAuth2',
       user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
+      clientId: process.env.OAUTH_CLIENT_ID,
+      clientSecret: process.env.OAUTH_CLIENT_SECRET,
+      refreshToken: process.env.OAUTH_REFRESH_TOKEN
     }
   });
 };
 
 /**
- * Initialize transporter safely (serverless friendly)
+ * Initialize transporter safely (serverless/Render friendly)
  */
 const initEmailTransporter = async () => {
   if (transporter) return true;
@@ -63,7 +56,7 @@ const initEmailTransporter = async () => {
 
       await t.verify();
       transporter = t;
-      console.log('✅ Email transporter ready');
+      console.log('✅ Email transporter ready (OAuth2 Authenticated)');
       return true;
     } catch (err) {
       console.error('❌ Email init failed:', err.message);
@@ -96,9 +89,7 @@ const sendEmail = async (options, attempt = 1) => {
     }
 
     const mail = {
-      from:
-        from ||
-        `"${process.env.EMAIL_FROM_NAME || 'Signverif'}" <${process.env.EMAIL_USER}>`,
+      from: from || `"${process.env.EMAIL_FROM_NAME || 'Signverif'}" <${process.env.EMAIL_USER}>`,
       to,
       subject,
       html,
@@ -109,7 +100,7 @@ const sendEmail = async (options, attempt = 1) => {
 
     const result = await transporter.sendMail(mail);
 
-    console.log(`✅ Email sent: ${result.messageId}`);
+    console.log(`✅ Email sent successfully: ${result.messageId}`);
 
     return { success: true, messageId: result.messageId };
   } catch (error) {
@@ -133,12 +124,7 @@ const sendEmail = async (options, attempt = 1) => {
 /**
  * Send document sharing invitation
  */
-const sendShareInvitation = async (
-  to,
-  senderName,
-  documentTitle,
-  signLink
-) => {
+const sendShareInvitation = async (to, senderName, documentTitle, signLink) => {
   const safeSender = escapeHtml(senderName);
   const safeTitle = escapeHtml(documentTitle);
   const safeLink = escapeHtml(signLink);
