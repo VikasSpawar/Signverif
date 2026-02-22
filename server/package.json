@@ -21,7 +21,8 @@
     "mongoose": "^9.2.0",
     "multer": "^2.0.2",
     "nodemailer": "^8.0.1",
-    "pdf-lib": "^1.17.1"
+    "pdf-lib": "^1.17.1",
+    "sib-api-v3-sdk": "^8.5.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.11"
